@@ -1,4 +1,4 @@
-name: Update Index Stars (auto)
+name: Update Index Stars & Repo Stats (auto)
 
 concurrency:
   group: index-release-publisher
@@ -39,7 +39,7 @@ jobs:
         run: |
           python scripts/download_index_release.py
 
-      - name: Scan stars (write stars_updates.json)
+      - name: Scan repo stats (write repo_stats_updates.json)
         env:
           GITHUB_TOKEN: ${{ steps.bot-app-token.outputs.token }}
           STARS_CHUNK_SIZE: "50"
@@ -53,7 +53,7 @@ jobs:
         run: |
           python scripts/download_index_release.py
 
-      - name: Apply stars updates to refreshed index.json
+      - name: Apply repo stats updates to refreshed index.json
         run: |
           python scripts/update_index_stars.py --mode apply
 

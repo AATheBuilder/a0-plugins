@@ -285,8 +285,13 @@ def _upsert_index_plugin(index: dict[str, Any], plugin_name: str, entry: dict[st
         plugins = {}
         index["plugins"] = plugins
     existing = plugins.get(plugin_name)
-    if isinstance(existing, dict) and isinstance(existing.get("stars"), int) and not isinstance(entry.get("stars"), int):
-        entry["stars"] = existing.get("stars")
+    if isinstance(existing, dict):
+        if isinstance(existing.get("stars"), int) and not isinstance(entry.get("stars"), int):
+            entry["stars"] = existing.get("stars")
+        if isinstance(existing.get("latest_commit"), str) and not isinstance(entry.get("latest_commit"), str):
+            entry["latest_commit"] = existing.get("latest_commit")
+        if isinstance(existing.get("latest_commit_timestamp"), str) and not isinstance(entry.get("latest_commit_timestamp"), str):
+            entry["latest_commit_timestamp"] = existing.get("latest_commit_timestamp")
     plugins[plugin_name] = entry
 
 

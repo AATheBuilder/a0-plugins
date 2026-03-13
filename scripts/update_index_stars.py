@@ -11,7 +11,7 @@ from typing import Any, NoReturn, cast
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = REPO_ROOT / "index.json"
 DEFAULT_CHUNK_SIZE = 50
-DEFAULT_UPDATES_PATH = REPO_ROOT / "stars_updates.json"
+DEFAULT_UPDATES_PATH = REPO_ROOT / "repo_stats_updates.json"
 
 
 class UpdateStarsError(Exception):
@@ -86,6 +86,22 @@ def _save_index(index: dict[str, Any]) -> None:
     INDEX_PATH.write_text(json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _extract_latest_commit(repo_obj: dict[str, Any]) -> tuple[str, str] | None:
+    default_branch_ref = repo_obj.get("defaultBranchRef")
+    if not isinstance(default_branch_ref, dict):
+        return None
+    target = default_branch_ref.get("target")
+    if not isinstance(target, dict):
+        return None
+    oid = target.get("oid")
+    committed_date = target.get("committedDate")
+    if not isinstance(oid, str) or not oid:
+        return None
+    if not isinstance(committed_date, str) or not committed_date:
+        return None
+    return oid, committed_date
+
+
 def _scan_and_write_updates(chunk_size: int, updates_path: Path) -> int:
     index = _load_index()
     plugins = cast(dict[str, Any], index.get("plugins"))
@@ -114,7 +130,7 @@ def _scan_and_write_updates(chunk_size: int, updates_path: Path) -> int:
         blocks: list[str] = []
         for i, (_, owner, repo) in enumerate(batch):
             blocks.append(
-                f'r{i}: repository(owner: "{owner}", name: "{repo}") {{ stargazerCount }}'
+                f'r{i}: repository(owner: "{owner}", name: "{repo}") {{ stargazerCount defaultBranchRef {{ target {{ ... on Commit {{ oid committedDate }} }} }} }}'
             )
         query = "query {\n" + "\n".join(blocks) + "\n}"
         # We want per-alias errors without failing the whole run.
@@ -173,9 +189,14 @@ def _scan_and_write_updates(chunk_size: int, updates_path: Path) -> int:
                 "stars": stars,
                 "repo": f"{owner}/{repo}",
             }
+            latest_commit = _extract_latest_commit(repo_obj)
+            if latest_commit is not None:
+                latest_commit_sha, latest_commit_timestamp = latest_commit
+                updates[plugin_name]["latest_commit"] = latest_commit_sha
+                updates[plugin_name]["latest_commit_timestamp"] = latest_commit_timestamp
 
     updates_path.write_text(json.dumps(updates, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"Wrote stars updates for {len(updates)} plugins -> {updates_path.relative_to(REPO_ROOT)}")
+    print(f"Wrote repo stats updates for {len(updates)} plugins -> {updates_path.relative_to(REPO_ROOT)}")
     return 0
 
 
@@ -202,10 +223,16 @@ def _apply_updates(updates_path: Path) -> int:
         stars = upd.get("stars")
         if isinstance(stars, int):
             entry["stars"] = stars
+        latest_commit = upd.get("latest_commit")
+        if isinstance(latest_commit, str) and latest_commit:
+            entry["latest_commit"] = latest_commit
+        latest_commit_timestamp = upd.get("latest_commit_timestamp")
+        if isinstance(latest_commit_timestamp, str) and latest_commit_timestamp:
+            entry["latest_commit_timestamp"] = latest_commit_timestamp
         applied += 1
 
     _save_index(index)
-    print(f"Applied stars updates to {applied} plugins")
+    print(f"Applied repo stats updates to {applied} plugins")
     return 0
 
 
