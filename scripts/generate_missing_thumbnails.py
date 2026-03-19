@@ -16,7 +16,7 @@ INDEX_JSON_PATH = REPO_ROOT / "index.json"
 PROMPT_TEMPLATE_PATH = REPO_ROOT / "scripts" / "thumbnail_prompt.md"
 GENERATED_THUMBNAILS_DIR = REPO_ROOT / "generated" / "thumbnails"
 OPENROUTER_SCRIPT_PATH = REPO_ROOT / "scripts" / "openrouter_image_gen.py"
-DEFAULT_MODEL = "google/gemini-2.5-flash-image-preview"
+DEFAULT_MODEL = "google/gemini-3.1-flash-image-preview"
 
 
 class ThumbnailGenerationError(Exception):
