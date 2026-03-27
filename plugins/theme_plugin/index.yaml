@@ -1,8 +1,7 @@
-title: Theme Switcher
-description: Allows users to change the theme of their AgentZero with a click of a button. Hacker, Flower, and Cyberpunk themes included.
+title: "🎨 Persona: Immersive UI Themes"
+description: "Persona allows you to completely transform your AgentZero experience with immersive visual themes. Switch between multiple aesthetics with a single click."
 github: https://github.com/AATheBuilder/a0-theme-plugin
 tags:
   - theme
-    - ui
-      - aesthetic
-      
+  - ui
+  - aesthetic
